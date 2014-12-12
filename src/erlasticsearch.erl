@@ -64,7 +64,23 @@
 
 -export([join/2]).
 
+
+-type connection_error() ::
+    erlasticsearch_worker:connection_error().
+
+-type thrift_call_error() ::
+    erlasticsearch_worker:thrift_call_error().
+
+%% TODO: Would be nice if type name would not conflift with one of its variants
+-type call_error() ::
+      {connection_error , connection_error()}
+    | {call_error       , thrift_call_error()}
+    | {call_exception   , {java, any()} | {erlang, badarg}}
+    .
+
+
 -define(APP, ?MODULE).
+
 
 -spec start() -> ok.
 start() ->
@@ -102,113 +118,137 @@ start_pool(PoolName, PoolOptions, ConnectionOptions) when is_list(PoolOptions),
 stop_pool(PoolName) ->
     erlasticsearch_poolboy_sup:stop_pool(PoolName).
 
--spec health(pool_name()) -> response().
+-spec health(pool_name()) ->
+    hope_result:t(response(), call_error()).
 health(PoolName) ->
     pool_call(PoolName, {health}, infinity).
 
--spec cluster_state(pool_name()) -> response().
+-spec cluster_state(pool_name()) ->
+    hope_result:t(response(), call_error()).
 cluster_state(PoolName) ->
     cluster_state(PoolName, []).
 
--spec cluster_state(pool_name(), params()) -> response().
+-spec cluster_state(pool_name(), params()) ->
+    hope_result:t(response(), call_error()).
 cluster_state(PoolName, Params) when is_list(Params) ->
     state(PoolName, Params).
 
--spec state(pool_name()) -> response().
+-spec state(pool_name()) ->
+    hope_result:t(response(), call_error()).
 state(PoolName) ->
     state(PoolName, []).
 
--spec state(pool_name(), params()) -> response().
+-spec state(pool_name(), params()) ->
+    hope_result:t(response(), call_error()).
 state(PoolName, Params) when is_list(Params) ->
     pool_call(PoolName, {state, Params}, infinity).
 
--spec nodes_info(pool_name()) -> response().
+-spec nodes_info(pool_name()) ->
+    hope_result:t(response(), call_error()).
 nodes_info(PoolName) ->
     nodes_info(PoolName, [], []).
 
--spec nodes_info(pool_name(), node_name()) -> response().
+-spec nodes_info(pool_name(), node_name()) ->
+    hope_result:t(response(), call_error()).
 nodes_info(PoolName, NodeName) when is_binary(NodeName) ->
     nodes_info(PoolName, [NodeName], []);
 nodes_info(PoolName, NodeNames) when is_list(NodeNames) ->
     nodes_info(PoolName, NodeNames, []).
 
--spec nodes_info(pool_name(), [node_name()], params()) -> response().
+-spec nodes_info(pool_name(), [node_name()], params()) ->
+    hope_result:t(response(), call_error()).
 nodes_info(PoolName, NodeNames, Params) when is_list(NodeNames), is_list(Params) ->
     pool_call(PoolName, {nodes_info, NodeNames, Params}, infinity).
 
--spec nodes_stats(pool_name()) -> response().
+-spec nodes_stats(pool_name()) ->
+    hope_result:t(response(), call_error()).
 nodes_stats(PoolName) ->
     nodes_stats(PoolName, [], []).
 
--spec nodes_stats(pool_name(), node_name()) -> response().
+-spec nodes_stats(pool_name(), node_name()) ->
+    hope_result:t(response(), call_error()).
 nodes_stats(PoolName, NodeName) when is_binary(NodeName) ->
     nodes_stats(PoolName, [NodeName], []);
 nodes_stats(PoolName, NodeNames) when is_list(NodeNames) ->
     nodes_stats(PoolName, NodeNames, []).
 
--spec nodes_stats(pool_name(), [node_name()], params()) -> response().
+-spec nodes_stats(pool_name(), [node_name()], params()) ->
+    hope_result:t(response(), call_error()).
 nodes_stats(PoolName, NodeNames, Params) when is_list(NodeNames), is_list(Params) ->
     pool_call(PoolName, {nodes_stats, NodeNames, Params}, infinity).
 
--spec status(pool_name(), index() | [index()]) -> response().
+-spec status(pool_name(), index() | [index()]) ->
+    hope_result:t(response(), call_error()).
 status(PoolName, Index) when is_binary(Index) ->
     status(PoolName, [Index]);
 status(PoolName, Indexes) when is_list(Indexes)->
     pool_call(PoolName, {status, Indexes}, infinity).
 
--spec indices_stats(pool_name(), index() | [index()]) -> response().
+-spec indices_stats(pool_name(), index() | [index()]) ->
+    hope_result:t(response(), call_error()).
 indices_stats(PoolName, Index) when is_binary(Index) ->
     indices_stats(PoolName, [Index]);
 indices_stats(PoolName, Indexes) when is_list(Indexes)->
     pool_call(PoolName, {indices_stats, Indexes}, infinity).
 
--spec create_index(pool_name(), index()) -> response().
+-spec create_index(pool_name(), index()) ->
+    hope_result:t(response(), call_error()).
 create_index(PoolName, Index) when is_binary(Index) ->
     create_index(PoolName, Index, <<>>).
 
--spec create_index(pool_name(), index(), doc()) -> response().
+-spec create_index(pool_name(), index(), doc()) ->
+    hope_result:t(response(), call_error()).
 create_index(PoolName, Index, Doc) when is_binary(Index) andalso (is_binary(Doc) orelse is_list(Doc)) ->
     pool_call(PoolName, {create_index, Index, Doc}, infinity).
 
--spec delete_index(pool_name()) -> response().
+-spec delete_index(pool_name()) ->
+    hope_result:t(response(), call_error()).
 delete_index(PoolName) ->
     delete_index(PoolName, ?ALL).
 
--spec delete_index(pool_name(), index() | [index()]) -> response().
+-spec delete_index(pool_name(), index() | [index()]) ->
+    hope_result:t(response(), call_error()).
 delete_index(PoolName, Index) when is_binary(Index) ->
     delete_index(PoolName, [Index]);
 delete_index(PoolName, Index) when is_list(Index) ->
     pool_call(PoolName, {delete_index, Index}, infinity).
 
--spec open_index(pool_name(), index()) -> response().
+-spec open_index(pool_name(), index()) ->
+    hope_result:t(response(), call_error()).
 open_index(PoolName, Index) when is_binary(Index) ->
     pool_call(PoolName, {open_index, Index}, infinity).
 
--spec close_index(pool_name(), index()) -> response().
+-spec close_index(pool_name(), index()) ->
+    hope_result:t(response(), call_error()).
 close_index(PoolName, Index) when is_binary(Index) ->
     pool_call(PoolName, {close_index, Index}, infinity).
 
--spec is_index(pool_name(), index() | [index()]) -> response().
+-spec is_index(pool_name(), index() | [index()]) ->
+    hope_result:t(response(), call_error()).
 is_index(PoolName, Index) when is_binary(Index) ->
     is_index(PoolName, [Index]);
 is_index(PoolName, Indexes) when is_list(Indexes) ->
     pool_call(PoolName, {is_index, Indexes}, infinity).
 
--spec count(pool_name(), doc()) -> response().
+-spec count(pool_name(), doc()) ->
+    hope_result:t(response(), call_error()).
 count(PoolName, Doc) when (is_binary(Doc) orelse is_list(Doc)) ->
     count(PoolName, ?ALL, [], Doc, []).
 
--spec count(pool_name(), doc(), params()) -> response().
+-spec count(pool_name(), doc(), params()) ->
+    hope_result:t(response(), call_error()).
 count(PoolName, Doc, Params) when (is_binary(Doc) orelse is_list(Doc)) andalso is_list(Params) ->
     count(PoolName, ?ALL, [], Doc, Params).
 
--spec count(pool_name(), index() | [index()], doc(), params()) -> response().
+-spec count(pool_name(), index() | [index()], doc(), params()) ->
+    hope_result:t(response(), call_error()).
 count(PoolName, Index, Doc, Params) when is_binary(Index) andalso (is_binary(Doc) orelse is_list(Doc)) andalso is_list(Params) ->
     count(PoolName, [Index], [], Doc, Params);
 count(PoolName, Indexes, Doc, Params) when is_list(Indexes) andalso (is_binary(Doc) orelse is_list(Doc)) andalso is_list(Params) ->
     count(PoolName, Indexes, [], Doc, Params).
 
--spec count(pool_name(), index() | [index()], type() | [type()], doc(), params()) -> response().
+-spec count(pool_name(), index() | [index()], type() | [type()], doc(), params()) ->
+    hope_result:t(response(), call_error()).
 count(PoolName, Index, Type, Doc, Params) when is_binary(Index) andalso is_binary(Type) andalso (is_binary(Doc) orelse is_list(Doc)) andalso is_list(Params) ->
     count(PoolName, [Index], [Type], Doc, Params);
 count(PoolName, Indexes, Type, Doc, Params) when is_list(Indexes) andalso is_binary(Type) andalso (is_binary(Doc) orelse is_list(Doc)) andalso is_list(Params) ->
@@ -218,21 +258,25 @@ count(PoolName, Index, Types, Doc, Params) when is_binary(Index) andalso is_list
 count(PoolName, Indexes, Types, Doc, Params) when is_list(Indexes) andalso is_list(Types) andalso (is_binary(Doc) orelse is_list(Doc)) andalso is_list(Params) ->
     pool_call(PoolName, {count, Indexes, Types, Doc, Params}, infinity).
 
--spec delete_by_query(pool_name(), doc()) -> response().
+-spec delete_by_query(pool_name(), doc()) ->
+    hope_result:t(response(), call_error()).
 delete_by_query(PoolName, Doc) when (is_binary(Doc) orelse is_list(Doc)) ->
     delete_by_query(PoolName, ?ALL, [], Doc, []).
 
--spec delete_by_query(pool_name(), doc(), params()) -> response().
+-spec delete_by_query(pool_name(), doc(), params()) ->
+    hope_result:t(response(), call_error()).
 delete_by_query(PoolName, Doc, Params) when (is_binary(Doc) orelse is_list(Doc)), is_list(Params) ->
     delete_by_query(PoolName, ?ALL, [], Doc, Params).
 
--spec delete_by_query(pool_name(), index() | [index()], doc(), params()) -> response().
+-spec delete_by_query(pool_name(), index() | [index()], doc(), params()) ->
+    hope_result:t(response(), call_error()).
 delete_by_query(PoolName, Index, Doc, Params) when is_binary(Index) andalso (is_binary(Doc) orelse is_list(Doc)) andalso is_list(Params) ->
     delete_by_query(PoolName, [Index], [], Doc, Params);
 delete_by_query(PoolName, Indexes, Doc, Params) when is_list(Indexes) andalso (is_binary(Doc) orelse is_list(Doc)) andalso is_list(Params) ->
     delete_by_query(PoolName, Indexes, [], Doc, Params).
 
--spec delete_by_query(pool_name(), index() | [index()], type() | [type()], doc(), params()) -> response().
+-spec delete_by_query(pool_name(), index() | [index()], type() | [type()], doc(), params()) ->
+    hope_result:t(response(), call_error()).
 delete_by_query(PoolName, Index, Type, Doc, Params) when is_binary(Index) andalso is_binary(Type) andalso (is_binary(Doc) orelse is_list(Doc)) andalso is_list(Params) ->
     delete_by_query(PoolName, [Index], [Type], Doc, Params);
 delete_by_query(PoolName, Indexes, Type, Doc, Params) when is_list(Indexes) andalso is_binary(Type) andalso (is_binary(Doc) orelse is_list(Doc)) andalso is_list(Params) ->
@@ -242,7 +286,8 @@ delete_by_query(PoolName, Index, Types, Doc, Params) when is_binary(Index) andal
 delete_by_query(PoolName, Indexes, Types, Doc, Params) when is_list(Indexes) andalso is_list(Types) andalso (is_binary(Doc) orelse is_list(Doc)) andalso is_list(Params) ->
     pool_call(PoolName, {delete_by_query, Indexes, Types, Doc, Params}, infinity).
 
--spec is_type(pool_name(), index() | [index()], type() | [type()]) -> response().
+-spec is_type(pool_name(), index() | [index()], type() | [type()]) ->
+    hope_result:t(response(), call_error()).
 is_type(PoolName, Index, Type) when is_binary(Index), is_binary(Type) ->
     is_type(PoolName, [Index], [Type]);
 is_type(PoolName, Indexes, Type) when is_list(Indexes), is_binary(Type) ->
@@ -252,69 +297,86 @@ is_type(PoolName, Index, Types) when is_binary(Index), is_list(Types) ->
 is_type(PoolName, Indexes, Types) when is_list(Indexes), is_list(Types) ->
     pool_call(PoolName, {is_type, Indexes, Types}, infinity).
 
--spec insert_doc(pool_name(), index(), type(), id(), doc()) -> response().
+-spec insert_doc(pool_name(), index(), type(), id(), doc()) ->
+    hope_result:t(response(), call_error()).
 insert_doc(PoolName, Index, Type, Id, Doc) when is_binary(Index) andalso is_binary(Type) andalso (is_binary(Doc) orelse is_list(Doc)) ->
     insert_doc(PoolName, Index, Type, Id, Doc, []).
 
--spec insert_doc(pool_name(), index(), type(), id(), doc(), params()) -> response().
+-spec insert_doc(pool_name(), index(), type(), id(), doc(), params()) ->
+    hope_result:t(response(), call_error()).
 insert_doc(PoolName, Index, Type, Id, Doc, Params) when is_binary(Index) andalso is_binary(Type) andalso (is_binary(Doc) orelse is_list(Doc)) andalso is_list(Params) ->
     pool_call(PoolName, {insert_doc, Index, Type, Id, Doc, Params}, infinity).
 
--spec update_doc(pool_name(), index(), type(), id(), doc()) -> response().
+-spec update_doc(pool_name(), index(), type(), id(), doc()) ->
+    hope_result:t(response(), call_error()).
 update_doc(PoolName, Index, Type, Id, Doc) when is_binary(Index) andalso is_binary(Type) andalso (is_binary(Doc) orelse is_list(Doc)) ->
     update_doc(PoolName, Index, Type, Id, Doc, []).
 
--spec update_doc(pool_name(), index(), type(), id(), doc(), params()) -> response().
+-spec update_doc(pool_name(), index(), type(), id(), doc(), params()) ->
+    hope_result:t(response(), call_error()).
 update_doc(PoolName, Index, Type, Id, Doc, Params) when is_binary(Index) andalso is_binary(Type) andalso (is_binary(Doc) orelse is_list(Doc)) andalso is_list(Params) ->
     pool_call(PoolName, {update_doc, Index, Type, Id, Doc, Params}, infinity).
 
--spec is_doc(pool_name(), index(), type(), id()) -> response().
+-spec is_doc(pool_name(), index(), type(), id()) ->
+    hope_result:t(response(), call_error()).
 is_doc(PoolName, Index, Type, Id) when is_binary(Index), is_binary(Type) ->
     pool_call(PoolName, {is_doc, Index, Type, Id}, infinity).
 
--spec get_doc(pool_name(), index(), type(), id()) -> response().
+-spec get_doc(pool_name(), index(), type(), id()) ->
+    hope_result:t(response(), call_error()).
 get_doc(PoolName, Index, Type, Id) when is_binary(Index), is_binary(Type) ->
     get_doc(PoolName, Index, Type, Id, []).
 
--spec get_doc(pool_name(), index(), type(), id(), params()) -> response().
+-spec get_doc(pool_name(), index(), type(), id(), params()) ->
+    hope_result:t(response(), call_error()).
 get_doc(PoolName, Index, Type, Id, Params) when is_binary(Index), is_binary(Type), is_list(Params)->
     pool_call(PoolName, {get_doc, Index, Type, Id, Params}, infinity).
 
--spec mget_doc(pool_name(), doc()) -> response().
+-spec mget_doc(pool_name(), doc()) ->
+    hope_result:t(response(), call_error()).
 mget_doc(PoolName, Doc) when (is_binary(Doc) orelse is_list(Doc)) ->
     mget_doc(PoolName, <<>>, <<>>, Doc).
 
--spec mget_doc(pool_name(), index(), doc()) -> response().
+-spec mget_doc(pool_name(), index(), doc()) ->
+    hope_result:t(response(), call_error()).
 mget_doc(PoolName, Index, Doc) when is_binary(Index) andalso (is_binary(Doc) orelse is_list(Doc))->
     mget_doc(PoolName, Index, <<>>, Doc).
 
--spec mget_doc(pool_name(), index(), type(), doc()) -> response().
+-spec mget_doc(pool_name(), index(), type(), doc()) ->
+    hope_result:t(response(), call_error()).
 mget_doc(PoolName, Index, Type, Doc) when is_binary(Index) andalso is_binary(Type) andalso (is_binary(Doc) orelse is_list(Doc))->
     pool_call(PoolName, {mget_doc, Index, Type, Doc}, infinity).
 
--spec delete_doc(pool_name(), index(), type(), id()) -> response().
+-spec delete_doc(pool_name(), index(), type(), id()) ->
+    hope_result:t(response(), call_error()).
 delete_doc(PoolName, Index, Type, Id) when is_binary(Index), is_binary(Type) ->
     delete_doc(PoolName, Index, Type, Id, []).
--spec delete_doc(pool_name(), index(), type(), id(), params()) -> response().
+-spec delete_doc(pool_name(), index(), type(), id(), params()) ->
+    hope_result:t(response(), call_error()).
 delete_doc(PoolName, Index, Type, Id, Params) when is_binary(Index), is_binary(Type), is_list(Params)->
     pool_call(PoolName, {delete_doc, Index, Type, Id, Params}, infinity).
 
--spec search(pool_name(), index(), type(), doc()) -> response().
+-spec search(pool_name(), index(), type(), doc()) ->
+    hope_result:t(response(), call_error()).
 search(PoolName, Index, Type, Doc) when is_binary(Index) andalso is_binary(Type) andalso (is_binary(Doc) orelse is_list(Doc))->
     search(PoolName, Index, Type, Doc, []).
--spec search(pool_name(), index(), type(), doc(), params()) -> response().
+-spec search(pool_name(), index(), type(), doc(), params()) ->
+    hope_result:t(response(), call_error()).
 search(PoolName, Index, Type, Doc, Params) when is_binary(Index) andalso is_binary(Type) andalso (is_binary(Doc) orelse is_list(Doc)) andalso is_list(Params) ->
     pool_call(PoolName, {search, Index, Type, Doc, Params}, infinity).
 
--spec bulk(pool_name(), doc()) -> response().
+-spec bulk(pool_name(), doc()) ->
+    hope_result:t(response(), call_error()).
 bulk(PoolName, Doc) when (is_binary(Doc) orelse is_list(Doc)) ->
     bulk(PoolName, <<>>, <<>>, Doc).
 
--spec bulk(pool_name(), index(), doc()) -> response().
+-spec bulk(pool_name(), index(), doc()) ->
+    hope_result:t(response(), call_error()).
 bulk(PoolName, Index, Doc) when is_binary(Index) andalso (is_binary(Doc) orelse is_list(Doc)) ->
     bulk(PoolName, Index, <<>>, Doc).
 
--spec bulk(pool_name(), index(), type(), doc()) -> response().
+-spec bulk(pool_name(), index(), type(), doc()) ->
+    hope_result:t(response(), call_error()).
 bulk(PoolName, Index, Type, Doc) when is_binary(Index) andalso is_binary(Type) andalso (is_binary(Doc) orelse is_list(Doc)) ->
     pool_call(PoolName, {bulk, Index, Type, Doc}, infinity).
 
@@ -326,101 +388,117 @@ refresh(PoolName, Index) when is_binary(Index) ->
 refresh(PoolName, Indexes) when is_list(Indexes) ->
     pool_call(PoolName, {refresh, Indexes}, infinity).
 
--spec flush(pool_name()) -> response().
+-spec flush(pool_name()) ->
+    hope_result:t(response(), call_error()).
 flush(PoolName) ->
     flush(PoolName, ?ALL).
 
--spec flush(pool_name(), index() | [index()]) -> response().
+-spec flush(pool_name(), index() | [index()]) ->
+    hope_result:t(response(), call_error()).
 flush(PoolName, Index) when is_binary(Index) ->
     flush(PoolName, [Index]);
 flush(PoolName, Indexes) when is_list(Indexes) ->
     pool_call(PoolName, {flush, Indexes}, infinity).
 
--spec optimize(pool_name()) -> response().
+-spec optimize(pool_name()) ->
+    hope_result:t(response(), call_error()).
 optimize(PoolName) ->
     optimize(PoolName, ?ALL).
 
--spec optimize(pool_name(), index() | [index()]) -> response().
+-spec optimize(pool_name(), index() | [index()]) ->
+    hope_result:t(response(), call_error()).
 optimize(PoolName, Index) when is_binary(Index) ->
     optimize(PoolName, [Index]);
 optimize(PoolName, Indexes) when is_list(Indexes) ->
     pool_call(PoolName, {optimize, Indexes}, infinity).
 
--spec segments(pool_name()) -> response().
+-spec segments(pool_name()) ->
+    hope_result:t(response(), call_error()).
 segments(PoolName) ->
     segments(PoolName, ?ALL).
 
--spec segments(pool_name(), index() | [index()]) -> response().
+-spec segments(pool_name(), index() | [index()]) ->
+    hope_result:t(response(), call_error()).
 segments(PoolName, Index) when is_binary(Index) ->
     segments(PoolName, [Index]);
 segments(PoolName, Indexes) when is_list(Indexes) ->
     pool_call(PoolName, {segments, Indexes}, infinity).
 
--spec clear_cache(pool_name()) -> response().
+-spec clear_cache(pool_name()) ->
+    hope_result:t(response(), call_error()).
 clear_cache(PoolName) ->
     clear_cache(PoolName, ?ALL, []).
 
--spec clear_cache(pool_name(), index() | [index()]) -> response().
+-spec clear_cache(pool_name(), index() | [index()]) ->
+    hope_result:t(response(), call_error()).
 clear_cache(PoolName, Index) when is_binary(Index) ->
     clear_cache(PoolName, [Index], []);
 clear_cache(PoolName, Indexes) when is_list(Indexes) ->
     clear_cache(PoolName, Indexes, []).
 
--spec clear_cache(pool_name(), index() | [index()], params()) -> response().
+-spec clear_cache(pool_name(), index() | [index()], params()) ->
+    hope_result:t(response(), call_error()).
 clear_cache(PoolName, Index, Params) when is_binary(Index), is_list(Params) ->
     clear_cache(PoolName, [Index], Params);
 clear_cache(PoolName, Indexes, Params) when is_list(Indexes), is_list(Params) ->
     pool_call(PoolName, {clear_cache, Indexes, Params}, infinity).
 
 
--spec put_mapping(pool_name(), index() | [index()], type(), doc()) -> response().
+-spec put_mapping(pool_name(), index() | [index()], type(), doc()) ->
+    hope_result:t(response(), call_error()).
 put_mapping(PoolName, Index, Type, Doc) when is_binary(Index) andalso is_binary(Type) andalso (is_binary(Doc) orelse is_list(Doc)) ->
     put_mapping(PoolName, [Index], Type, Doc);
 put_mapping(PoolName, Indexes, Type, Doc) when is_list(Indexes) andalso is_binary(Type) andalso (is_binary(Doc) orelse is_list(Doc)) ->
     pool_call(PoolName, {put_mapping, Indexes, Type, Doc}, infinity).
 
--spec get_mapping(pool_name(), index() | [index()], type()) -> response().
+-spec get_mapping(pool_name(), index() | [index()], type()) ->
+    hope_result:t(response(), call_error()).
 get_mapping(PoolName, Index, Type) when is_binary(Index) andalso is_binary(Type) ->
     get_mapping(PoolName, [Index], Type);
 get_mapping(PoolName, Indexes, Type) when is_list(Indexes) andalso is_binary(Type) ->
     pool_call(PoolName, {get_mapping, Indexes, Type}, infinity).
 
--spec delete_mapping(pool_name(), index() | [index()], type()) -> response().
+-spec delete_mapping(pool_name(), index() | [index()], type()) ->
+    hope_result:t(response(), call_error()).
 delete_mapping(PoolName, Index, Type) when is_binary(Index) andalso is_binary(Type) ->
     delete_mapping(PoolName, [Index], Type);
 delete_mapping(PoolName, Indexes, Type) when is_list(Indexes) andalso is_binary(Type) ->
     pool_call(PoolName, {delete_mapping, Indexes, Type}, infinity).
 
--spec aliases(pool_name(), doc()) -> response().
+-spec aliases(pool_name(), doc()) ->
+    hope_result:t(response(), call_error()).
 aliases(PoolName, Doc) when (is_binary(Doc) orelse is_list(Doc)) ->
     pool_call(PoolName, {aliases, Doc}, infinity).
 
--spec insert_alias(pool_name(), index(), index()) -> response().
+-spec insert_alias(pool_name(), index(), index()) ->
+    hope_result:t(response(), call_error()).
 insert_alias(PoolName, Index, Alias) when is_binary(Index) andalso is_binary(Alias) ->
     pool_call(PoolName, {insert_alias, Index, Alias}, infinity).
--spec insert_alias(pool_name(), index(), index(), doc()) -> response().
+-spec insert_alias(pool_name(), index(), index(), doc()) ->
+    hope_result:t(response(), call_error()).
 insert_alias(PoolName, Index, Alias, Doc) when is_binary(Index) andalso is_binary(Alias) andalso (is_binary(Doc) orelse is_list(Doc)) ->
     pool_call(PoolName, {insert_alias, Index, Alias, Doc}, infinity).
 
--spec delete_alias(pool_name(), index(), index()) -> response().
+-spec delete_alias(pool_name(), index(), index()) ->
+    hope_result:t(response(), call_error()).
 delete_alias(PoolName, Index, Alias) when is_binary(Index) andalso is_binary(Alias) ->
     pool_call(PoolName, {delete_alias, Index, Alias}, infinity).
 
--spec is_alias(pool_name(), index(), index()) -> response().
+-spec is_alias(pool_name(), index(), index()) ->
+    hope_result:t(response(), call_error()).
 is_alias(PoolName, Index, Alias) when is_binary(Index) andalso is_binary(Alias) ->
     pool_call(PoolName, {is_alias, Index, Alias}, infinity).
 
--spec get_alias(pool_name(), index(), index()) -> response().
+-spec get_alias(pool_name(), index(), index()) ->
+    hope_result:t(response(), call_error()).
 get_alias(PoolName, Index, Alias) when is_binary(Index) andalso is_binary(Alias) ->
     pool_call(PoolName, {get_alias, Index, Alias}, infinity).
 
 -spec pool_call(pool_name(), tuple(), timeout()) ->
-    response().
+    hope_result:t(response(), call_error()).
 pool_call(PoolName, Command, Timeout) ->
     Call = fun(Worker) -> gen_server:call(Worker, Command, Timeout) end,
-    % TODO: Propogate full result.
-    {ok, Response} = poolboy:transaction(PoolName, Call),
-    Response.
+    poolboy:transaction(PoolName, Call).
 
 -spec get_env(Key :: atom(), Default :: term()) -> term().
 get_env(Key, Default) ->

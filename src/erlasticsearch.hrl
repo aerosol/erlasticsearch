@@ -21,7 +21,7 @@
 
 -type method()          :: atom().
 -type rest_response()   :: #restResponse{}.
--type response()        :: [tuple()] | error().
+-type response()        :: [tuple()].
 -type rest_request()    :: #restRequest{}.
 -type connection()      :: any().
 -type node_name()       :: binary().
